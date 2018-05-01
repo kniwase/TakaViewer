@@ -1,4 +1,4 @@
-import tkinter, oscv2, numpy as np
+import tkinter, os, cv2, numpy as np
 from tkinter import filedialog
 from niwaCV import niwaCV
 
