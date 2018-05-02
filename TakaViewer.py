@@ -25,6 +25,8 @@ class Main_wiondow(tkinter.Tk):
         #変数の定義
         self.image_win = Image_win(self)
         self.sel_dir_button = Sel_dir_button(self)
+        self.image_slidebar = Image_slidebar(self)
+        self.autoplay_button = Autoplay_button(self)
         self.file_list_box = File_list_box(self)
 
 #フォルダ選択ボタンの定義
@@ -75,23 +77,23 @@ class File_list_box(tkinter.Listbox):
 #画像選択スライドバーの定義
 class Image_slidebar(tkinter.Scale):
     def __init__(self, main_win):
-        self.slide_pos = tkinter.IntVar()
-        self.slide_pos.trace("w", slide_pos_changed)
-        super().__init__(frame1, variable=myval, orient=HORIZONTAL, length=200, from=0, to=1)
         self.main_win = main_win
-
-    def slide_pos_changed(self, event):
-        self.main_win.image_win.display_image(self.slide_pos.get())
+        super().__init__(main_win, variable=self.main_win.image_win.idx, orient=tkinter.HORIZONTAL, to=0)
+        self.pack(side=tkinter.BOTTOM)
 
 #画像表示用ウィンドウの定義
 class Image_win(tkinter.Toplevel):
     def __init__(self, main_win):
         super().__init__(main_win)
+        self.main_win = main_win
         self.title('Image')
         self.protocol("WM_DELETE_WINDOW", self.iconify)
         self.img_canvas = tkinter.Canvas(self)
         self.img_canvas.pack()
         self.autopaly_id = None
+        self.idx = tkinter.IntVar()
+        self.idx.set(0)
+        self.idx.trace("w", self.display_image)
 
     def convert_image(self, img_niwaCV):
         img_opencv = img_niwaCV.getOpenCVimage()
@@ -103,33 +105,48 @@ class Image_win(tkinter.Toplevel):
     def load_asd(self, path):
         self.images = niwaCV.ASD_reader(path)
         self.frame_time = self.images.header['FrameTime']
-        self.idx = 0
+        self.main_win.image_slidebar.config(to=len(self.images)-1)
         self.img, shape = self.convert_image(self.images[0])
         self.img_showing = self.img_canvas.create_image(0, 0, image=self.img, anchor=tkinter.NW)
         self.img_canvas.config(width=shape[1], height=shape[0])
         self.config()
+        self.idx.set(0)
 
         #self.autopaly_id = self.after(int(self.frame_time), self.autoplay_image_start)
 
-    def display_image(self, idx):
-        self.idx = idx
-        self.img, shape = self.convert_image(self.images[self.idx])
+    def display_image(self, *args):
+        self.img, shape = self.convert_image(self.images[self.idx.get()])
         self.img_canvas.itemconfig(self.img_showing, image=self.img)
 
     def autoplay_image_start(self):
-        if self.idx < len(self.images)-1:
+        if self.idx.get() < len(self.images)-1:
             self.autopaly_id = self.after(int(self.frame_time), self.autoplay_image)
 
     def autoplay_image(self):
-        if self.idx < len(self.images)-1:
-            self.display_image(self.idx+1)
+        if self.idx.get() < len(self.images)-1:
+            self.idx.set(self.idx.get()+1)
             self.autopaly_id = self.after(int(self.frame_time), self.autoplay_image)
 
     def autoplay_image_cancel(self):
         if self.autopaly_id != None:
             self.after_cancel(self.autopaly_id)
+            self.autopaly_id = None
 
+#自動再生ボタンの定義
+class Autoplay_button(tkinter.Button):
+    def __init__(self, main_win):
+        super().__init__(main_win, text='Autoplay')
+        #変数の定義
+        self.main_win = main_win
+        #GUIの定義
+        self.bind('<Button-1>', self.autoplay)
+        self.pack(side=tkinter.BOTTOM)
 
+    def autoplay(self, event):
+        if self.main_win.image_win.autopaly_id == None:
+            self.main_win.image_win.autoplay_image_start()
+        else:
+            self.main_win.image_win.autoplay_image_cancel()
 
 
 
