@@ -93,13 +93,12 @@ class Image_win(tkinter.Toplevel):
         img_opencv = img.getOpenCVimage()
         print(img_opencv)
         img_PIL = Image.fromarray(cv2.cvtColor(img_opencv, cv2.COLOR_BGR2RGB))
-        img_PIL.show()
         img_tk = ImageTk.PhotoImage(img_PIL)
         return img_tk
 
     def display_image(self, idx):
-        img = self.convert_image(self.images[idx])
-        self.img_showing.configure(image=img)
+        self.img = self.convert_image(self.images[idx])
+        self.img_showing.configure(image=self.img)
 
 
 #メイン
