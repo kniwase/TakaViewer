@@ -72,33 +72,65 @@ class File_list_box(tkinter.Listbox):
         self.idx = self.curselection()[0]
         self.main_win.image_win.load_asd(self.asd_files[self.idx])
 
+#画像選択スライドバーの定義
+class Image_slidebar(tkinter.Scale):
+    def __init__(self, main_win):
+        self.slide_pos = tkinter.IntVar()
+        self.slide_pos.trace("w", slide_pos_changed)
+        super().__init__(frame1, variable=myval, orient=HORIZONTAL, length=200, from=0, to=1)
+        self.main_win = main_win
+
+    def slide_pos_changed(self, event):
+        self.main_win.image_win.display_image(self.slide_pos.get())
+
 #画像表示用ウィンドウの定義
 class Image_win(tkinter.Toplevel):
     def __init__(self, main_win):
         super().__init__(main_win)
         self.title('Image')
         self.protocol("WM_DELETE_WINDOW", self.iconify)
-        self.img_showing = tkinter.Label(self)
-        self.img_showing.pack()
+        self.img_canvas = tkinter.Canvas(self)
+        self.img_canvas.pack()
+        self.autopaly_id = None
+
+    def convert_image(self, img_niwaCV):
+        img_opencv = img_niwaCV.getOpenCVimage()
+        shape = img_opencv.shape
+        img_PIL = Image.fromarray(cv2.cvtColor(img_opencv, cv2.COLOR_BGR2RGB))
+        img_tk = ImageTk.PhotoImage(img_PIL)
+        return img_tk, shape
 
     def load_asd(self, path):
         self.images = niwaCV.ASD_reader(path)
         self.frame_time = self.images.header['FrameTime']
-        print(self.images.header['Comment'])
         self.idx = 0
-        self.autoplay = None
-        self.display_image(self.idx)
+        self.img, shape = self.convert_image(self.images[0])
+        self.img_showing = self.img_canvas.create_image(0, 0, image=self.img, anchor=tkinter.NW)
+        self.img_canvas.config(width=shape[1], height=shape[0])
+        self.config()
 
-    def convert_image(self, img):
-        img_opencv = img.getOpenCVimage()
-        print(img_opencv)
-        img_PIL = Image.fromarray(cv2.cvtColor(img_opencv, cv2.COLOR_BGR2RGB))
-        img_tk = ImageTk.PhotoImage(img_PIL)
-        return img_tk
+        #self.autopaly_id = self.after(int(self.frame_time), self.autoplay_image_start)
 
     def display_image(self, idx):
-        self.img = self.convert_image(self.images[idx])
-        self.img_showing.configure(image=self.img)
+        self.idx = idx
+        self.img, shape = self.convert_image(self.images[self.idx])
+        self.img_canvas.itemconfig(self.img_showing, image=self.img)
+
+    def autoplay_image_start(self):
+        if self.idx < len(self.images)-1:
+            self.autopaly_id = self.after(int(self.frame_time), self.autoplay_image)
+
+    def autoplay_image(self):
+        if self.idx < len(self.images)-1:
+            self.display_image(self.idx+1)
+            self.autopaly_id = self.after(int(self.frame_time), self.autoplay_image)
+
+    def autoplay_image_cancel(self):
+        if self.autopaly_id != None:
+            self.after_cancel(self.autopaly_id)
+
+
+
 
 
 #メイン
