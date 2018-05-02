@@ -32,28 +32,23 @@ class Main_wiondow(tkinter.Tk):
 #フォルダ選択ボタンの定義
 class Sel_dir_button(tkinter.Button):
     def __init__(self, main_win):
-        super().__init__(main_win, text='Slect Folder')
-        #変数の定義
+        super().__init__(main_win, text='Slect Folder', command=self.select_dir)
         self.main_win = main_win
-        #GUIの定義
-        #   ファイル選択ボタンがクリックされたらフォルダ選択用関数が呼び出される
-        self.bind('<Button-1>', self.select_dir)
         self.pack(side=tkinter.BOTTOM)
 
     #フォルダ選択用関数
-    def select_dir(self, event):
-        def _select_dir():
-            directory = filedialog.askdirectory()
+    def select_dir(self):
+        directory = filedialog.askdirectory()
+        if directory != '':
+            if self.main_win.file_list_box.size() != 0:
+                self.main_win.file_list_box.delete(0, self.main_win.file_list_box.size())
             files = [os.path.join(directory, f) for f in os.listdir(directory)]
             files = [f for f in files if os.path.isfile(f)]
             asd_files = [f for f in files if os.path.splitext(f)[1] == '.asd']
-            return asd_files
-        if self.main_win.file_list_box.size() != 0:
-            self.main_win.file_list_box.delete(0, self.main_win.file_list_box.size())
-        self.main_win.file_list_box.asd_files = _select_dir()
-        for idx, f in enumerate(self.main_win.file_list_box.asd_files):
-            self.main_win.file_list_box.insert(idx, os.path.basename(f))
-        self.main_win.file_list_box.pack()
+            self.main_win.file_list_box.asd_files = asd_files
+            for idx, f in enumerate(self.main_win.file_list_box.asd_files):
+                self.main_win.file_list_box.insert(idx, os.path.basename(f))
+            self.main_win.file_list_box.pack()
 
 #ファイル選択ボックスの定義
 class File_list_box(tkinter.Listbox):
@@ -112,8 +107,6 @@ class Image_win(tkinter.Toplevel):
         self.config()
         self.idx.set(0)
 
-        #self.autopaly_id = self.after(int(self.frame_time), self.autoplay_image_start)
-
     def display_image(self, *args):
         self.img, shape = self.convert_image(self.images[self.idx.get()])
         self.img_canvas.itemconfig(self.img_showing, image=self.img)
@@ -135,20 +128,17 @@ class Image_win(tkinter.Toplevel):
 #自動再生ボタンの定義
 class Autoplay_button(tkinter.Button):
     def __init__(self, main_win):
-        super().__init__(main_win, text='Autoplay')
-        #変数の定義
+        super().__init__(main_win, text='Autoplay', command=self.autoplay)
         self.main_win = main_win
-        #GUIの定義
-        self.bind('<Button-1>', self.autoplay)
         self.pack(side=tkinter.BOTTOM)
 
-    def autoplay(self, event):
+    def autoplay(self):
         if self.main_win.image_win.autopaly_id == None:
             self.main_win.image_win.autoplay_image_start()
+            self.config(text='Stop')
         else:
             self.main_win.image_win.autoplay_image_cancel()
-
-
+            self.config(text='Autoplay')
 
 #メイン
 main_win = Main_wiondow()
