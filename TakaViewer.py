@@ -1,5 +1,5 @@
 import tkinter, os, cv2, numpy as np
-from tkinter import filedialog
+from tkinter import filedialog, PhotoImage
 from PIL import Image, ImageTk
 from niwaCV import niwaCV
 
@@ -77,7 +77,9 @@ class Image_win(tkinter.Toplevel):
     def __init__(self, main_win):
         super().__init__(main_win)
         self.title('Image')
-        self.protocol("WM_DELETE_WINDOW", do_nothing)
+        self.protocol("WM_DELETE_WINDOW", self.iconify)
+        self.img_showing = tkinter.Label(self)
+        self.img_showing.pack()
 
     def load_asd(self, path):
         self.images = niwaCV.ASD_reader(path)
@@ -87,8 +89,17 @@ class Image_win(tkinter.Toplevel):
         self.autoplay = None
         self.display_image(self.idx)
 
+    def convert_image(self, img):
+        img_opencv = img.getOpenCVimage()
+        print(img_opencv)
+        img_PIL = Image.fromarray(cv2.cvtColor(img_opencv, cv2.COLOR_BGR2RGB))
+        img_PIL.show()
+        img_tk = ImageTk.PhotoImage(img_PIL)
+        return img_tk
+
     def display_image(self, idx):
-        pass
+        img = self.convert_image(self.images[idx])
+        self.img_showing.configure(image=img)
 
 
 #メイン
