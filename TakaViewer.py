@@ -78,9 +78,16 @@ class Image_win(tkinter.Toplevel):
         super().__init__(main_win)
         self.title('Image')
         self.protocol("WM_DELETE_WINDOW", do_nothing)
+		self.display_image(self.idx)
 
     def load_asd(self, path):
-        print(path)
+        self.images = niwaCV.ASD_reader(path)
+        self.frame_time = self.images.header['FrameTime']
+        self.idx = 0
+        self.autoplay = None
+
+    def display_image(self, idx):
+        pass
 
 
 #メイン
