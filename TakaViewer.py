@@ -1,7 +1,7 @@
 import tkinter, os, cv2, numpy as np
 from tkinter import filedialog, PhotoImage
 from PIL import Image, ImageTk
-from niwaCV import niwaCV
+from pyhsafm import afmimproc as aip
 
 #機能の定義
 def do_nothing(): pass
@@ -90,15 +90,15 @@ class Image_win(tkinter.Toplevel):
         self.idx.set(0)
         self.idx.trace("w", self.display_image)
 
-    def convert_image(self, img_niwaCV):
-        img_opencv = img_niwaCV.getOpenCVimage()
+    def convert_image(self, img_aip):
+        img_opencv = img_aip.getOpenCVimage()
         shape = img_opencv.shape
         img_PIL = Image.fromarray(cv2.cvtColor(img_opencv, cv2.COLOR_BGR2RGB))
         img_tk = ImageTk.PhotoImage(img_PIL)
         return img_tk, shape
 
     def load_asd(self, path):
-        self.images = niwaCV.ASD_reader(path)
+        self.images = aip.ASD_reader(path)
         self.frame_time = self.images.header['FrameTime']
         self.main_win.image_slidebar.config(to=len(self.images)-1)
         self.img, shape = self.convert_image(self.images[0])
